@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>28 MECE Framework — Взаимоисключающие, совместно исчерпывающие </title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* THEMES */
+:root {
+  --bg: #030712;
+  --cyan: #00e5ff; --magenta: #ff2d95; --purple: #a855f7;
+  --green: #00ff88; --gold: #ffb800; --white: #ecedf2;
+  --glass: rgba(255,255,255,.025); --glass-border: rgba(255,255,255,.05);
+}
+body.theme-aurora {
+  --cyan: #00ff88; --magenta: #ffb800; --purple: #00e5ff;
+  --green: #ff2d95; --gold: #a855f7;
+}
+body.theme-void {
+  --cyan: #a855f7; --magenta: #c4b5fd; --purple: #00e5ff;
+  --green: #c084fc; --gold: #e9d5ff; --white: #f5f3ff;
+}
+
+html { scroll-behavior: smooth }
+
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: var(--bg); color: #c4c4d4;
+  min-height: 100vh; line-height: 1.75; font-size: 15px;
+}
+
+/* Progress bar */
+.progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--purple), var(--green));
+  z-index: 9999; transition: width .1s linear;
+  border-radius: 0 2px 2px 0; box-shadow: 0 0 10px rgba(0,229,255,.5);
+}
+
+/* Back to top */
+.back-to-top {
+  position: fixed; bottom: 28px; right: 28px; z-index: 999;
+  width: 44px; height: 44px; border-radius: 14px;
+  background: rgba(0,229,255,.06);
+  border: 1px solid rgba(0,229,255,.2);
+  color: var(--cyan); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+  opacity: 0; transform: translateY(16px);
+  pointer-events: none;
+  transition: all .35s ease; backdrop-filter: blur(8px);
+}
+.back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto }
+.back-to-top:hover {
+  background: rgba(0,229,255,.12); border-color: rgba(0,229,255,.4);
+  box-shadow: 0 0 24px rgba(0,229,255,.15); transform: translateY(-3px);
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0,229,255,.015) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,229,255,.015) 1px, transparent 1px);
+  background-size: 70px 70px;
+  mask: radial-gradient(ellipse 80% 80% at 50% 10%, #000 15%, transparent 70%);
+}
+
+.container { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 36px 24px 80px }
+
+/* Top row */
+.top-row { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; flex-wrap: wrap }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 13px; font-weight: 500;
+  padding: 10px 20px; border-radius: 12px;
+  cursor: pointer; text-decoration: none;
+  transition: all .3s ease; position: relative; white-space: nowrap;
+}
+.btn-back { background: rgba(0,229,255,.04); border: 1px solid rgba(0,229,255,.15); color: rgba(0,229,255,.7) }
+.btn-back:hover { background: rgba(0,229,255,.08); border-color: rgba(0,229,255,.35); color: var(--cyan); box-shadow: 0 0 16px rgba(0,229,255,.12), inset 0 0 16px rgba(0,229,255,.04) }
+.btn-copy { background: rgba(0,255,136,.04); border: 1px solid rgba(0,255,136,.15); color: rgba(0,255,136,.7) }
+.btn-copy:hover { background: rgba(0,255,136,.08); border-color: rgba(0,255,136,.35); color: var(--green); box-shadow: 0 0 16px rgba(0,255,136,.12), inset 0 0 16px rgba(0,255,136,.04) }
+.btn-copy.copied { background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.4); color: var(--green); box-shadow: 0 0 20px rgba(0,255,136,.2) }
+.btn svg { width: 16px; height: 16px; flex-shrink: 0 }
+
+/* Content card */
+.content-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 22px; padding: 44px 48px;
+  position: relative; overflow: hidden;
+}
+.content-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--purple), var(--green));
+  border-radius: 3px 3px 0 0;
+}
+
+h1 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 32px; font-weight: 700;
+  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 28px; padding-bottom: 24px;
+  border-bottom: 1px solid var(--glass-border); letter-spacing: -.02em;
+}
+h2 { font-size: 21px; font-weight: 600; color: #e8e8f0; margin: 36px 0 16px; padding-left: 16px; border-left: 3px solid var(--cyan); border-radius: 0 3px 3px 0; letter-spacing: -.01em }
+h3 { font-size: 17px; font-weight: 600; color: #d4d4e0; margin: 28px 0 12px }
+strong { color: #e8e8f0; font-weight: 600 }
+ul, ol { margin: 14px 0; padding-left: 26px }
+li { margin: 7px 0; color: #b0b0c0 }
+li::marker { color: var(--cyan) }
+p { margin: 12px 0; color: #b4b4c4 }
+hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--glass-border), transparent); margin: 32px 0 }
+code { background: rgba(0,229,255,.06); color: var(--cyan); padding: 2px 10px; border-radius: 5px; font-size: 13px; font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(0,229,255,.1) }
+pre.code-block { background: rgba(0,0,0,.5); padding: 20px 24px; border-radius: 14px; border: 1px solid var(--glass-border); overflow-x: auto; font-size: 13px; line-height: 1.7; margin: 16px 0; color: #aaa; font-family: 'JetBrains Mono', monospace }
+
+/* Prev/Next */
+.nav-bottom { display: flex; justify-content: space-between; gap: 14px; margin-top: 36px }
+.btn-nav {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 14px; font-weight: 500;
+  padding: 14px 24px; border-radius: 14px;
+  text-decoration: none; transition: all .3s ease;
+  flex: 1; max-width: 50%;
+}
+.btn-prev { background: rgba(168,85,247,.04); border: 1px solid rgba(168,85,247,.15); color: rgba(168,85,247,.7); justify-content: flex-start }
+.btn-prev:hover { background: rgba(168,85,247,.08); border-color: rgba(168,85,247,.35); color: var(--purple); box-shadow: 0 0 16px rgba(168,85,247,.12), inset 0 0 16px rgba(168,85,247,.04) }
+.btn-next { background: rgba(255,45,149,.04); border: 1px solid rgba(255,45,149,.15); color: rgba(255,45,149,.7); justify-content: flex-end; margin-left: auto }
+.btn-next:hover { background: rgba(255,45,149,.08); border-color: rgba(255,45,149,.35); color: var(--magenta); box-shadow: 0 0 16px rgba(255,45,149,.12), inset 0 0 16px rgba(255,45,149,.04) }
+.btn-nav .nav-label { font-size: 11px; opacity: .5; display: block; line-height: 1 }
+.btn-nav .nav-title { font-size: 14px; font-weight: 600 }
+
+@media (min-width: 820px) { .content-card { box-shadow: 0 0 50px rgba(0,229,255,.02), 0 8px 32px rgba(0,0,0,.5) } }
+@media (max-width: 600px) {
+  .container { padding: 20px 14px 60px }
+  .content-card { padding: 28px 20px; border-radius: 18px }
+  h1 { font-size: 26px } h2 { font-size: 18px }
+  .btn { padding: 8px 16px; font-size: 12px }
+  .btn-nav { padding: 12px 16px; font-size: 13px }
+  .btn-nav .nav-title { font-size: 12px }
+  .back-to-top { bottom: 18px; right: 18px; width: 38px; height: 38px }
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+<button class="back-to-top" id="backToTop" title="Наверх">↑</button>
+<div class="container">
+<div class="top-row">
+<a class="btn btn-back" href="index.html">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+Назад к списку</a>
+<button class="btn btn-copy" onclick="copyPrompt(this)" title="Скопировать весь промпт">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+Копировать</button>
+</div>
+<div class="content-card" id="prompt-content">
+<h1>MECE Framework — Взаимоисключающие, совместно исчерпывающие категории</h1>
+<p><strong>Автор:</strong> Барбара Минто (McKinsey & Company), 1960-е</p>
+<p><strong>Тип:</strong> Структурирование информации и анализа</p>
+<p><strong>Сложность:</strong> ★★☆☆☆ (базовая)</p>
+
+
+<h2>📖 ИСТОРИЯ СОЗДАНИЯ</h2>
+
+<p>1960-е. McKinsey & Company. Барбара Минто, первая женщина-консультант McKinsey, разрабатывает «Minto Pyramid Principle» — метод структурирования информации, который становится стандартом консалтинга.</p>
+
+<p>Ключевой элемент — MECE (Mutually Exclusive, Collectively Exhaustive): категории должны быть взаимоисключающими и совместно исчерпывающими. Ни пересечений, ни пропусков.</p>
+
+<h2>👤 ОБ АВТОРЕ</h2>
+
+<p><strong>Барбара Минто</strong> — бывший консультант McKinsey, автор «The Pyramid Principle» (1985). Её методика — обязательный тренинг для всех новых консультантов McKinsey.</p>
+
+<h2>🌍 КОНТЕКСТ ПРИМЕНЕНИЯ</h2>
+
+<ul>
+<li>Консалтинг: структурирование проблем</li>
+<li>Аналитика данных: категоризация</li>
+<li>Презентации: логика аргументации</li>
+</ul>
+
+<h2>🏭 ИЗВЕСТНЫЕ КЕЙСЫ</h2>
+
+<p><strong>McKinsey:</strong> Каждый консультант обучается MECE в первую неделю. Применяется во всех проектах — от стратегии до due diligence.</p>
+
+
+<h2>КОГДА ПРИМЕНЯТЬ</h2>
+<ul>
+<li>Нужно разложить сложную проблему на непересекающиеся части</li>
+<li>Подготовка к анализу: классификация данных, гипотез, рисков</li>
+<li>Проверка полноты охвата (не упущено ли что-то важное)</li>
+<li>Структурирование отчёта или презентации для руководства</li>
+</ul>
+
+<h2>СУТЬ МЕТОДА</h2>
+<p>MECE = Mutually Exclusive (взаимоисключающие) + Collectively Exhaustive (совместно исчерпывающие).</p>
+
+<p>Любой набор категорий должен удовлетворять двум условиям:</p>
+<p>1. Ни один элемент не попадает в две категории одновременно (нет пересечений)</p>
+<p>2. Все возможные элементы охвачены (нет пробелов)</p>
+
+<p>Пример плохой MECE: категории «Клиенты из Москвы» и «Клиенты с доходом >100к» — пересекаются.</p>
+<p>Пример хорошей MECE: «B2B» и «B2C»; «Новые клиенты» и «Существующие клиенты».</p>
+
+<h2>АЛГОРИТМ АНАЛИЗА</h2>
+
+<h3>Шаг 1. Определи объект декомпозиции</h3>
+<p>Что именно мы раскладываем? Рынок? Затраты? Проблемы клиентов?</p>
+<p>Сформулируй одним предложением.</p>
+
+<h3>Шаг 2. Выбери принцип декомпозиции</h3>
+<p>Варианты:</p>
+<ul>
+<li>По сегментам (география, отрасль, размер компании)</li>
+<li>По процессу (этапы воронки, шаги производства)</li>
+<li>По формуле (Прибыль = Выручка − Затраты, где Выручка = Цена × Объём)</li>
+<li>По времени (до / во время / после)</li>
+<li>По структуре (подразделения, продукты, каналы)</li>
+</ul>
+
+<h3>Шаг 3. Проверь «M»</h3>
+<p>Взаимоисключаемость: есть ли элементы, попадающие в две категории?</p>
+<p>Если да — уточни границы или выбери другой принцип.</p>
+
+<h3>Шаг 4. Проверь «CE»</h3>
+<p>Совместная исчерпываемость: есть ли элементы, не попавшие ни в одну категорию?</p>
+<p>Если да — добавь категорию «Прочее» и проанализируй её состав.</p>
+
+<h3>Шаг 5. Примени структуру</h3>
+<p>Используй полученное MECE-дерево для:</p>
+<ul>
+<li>Распределения данных по категориям</li>
+<li>Формулирования гипотез для каждой ветки</li>
+<li>Приоритизации: какие ветки самые важные?</li>
+</ul>
+
+<h2>ФОРМАТ ВЫВОДА</h2>
+
+<h3>MECE-дерево</h3>
+<p>Проблема: [исходная проблема]</p>
+<p>Принцип декомпозиции: [какой выбран]</p>
+
+<p>```</p>
+<p>[Проблема]</p>
+<p>├── [Категория 1]</p>
+<p>│   ├── [Подкатегория 1.1]</p>
+<p>│   └── [Подкатегория 1.2]</p>
+<p>├── [Категория 2]</p>
+<p>└── [Категория 3]</p>
+<p>```</p>
+
+<h3>Анализ</h3>
+<ul>
+<li>Категории с наибольшим влиянием: [список]</li>
+<li>Что упущено (если есть): [пробелы]</li>
+<li>Где пересечения (если есть): [конфликты]</li>
+</ul>
+
+<h3>Рекомендации</h3>
+<p>1. [Действие по категории 1]</p>
+<p>2. [Действие по категории 2]</p>
+
+<h2>ПРИМЕР</h2>
+<p><strong>Проблема:</strong> Почему падает выручка интернет-магазина?</p>
+<p>Выручка = Трафик × Конверсия × Средний чек × Частота покупок</p>
+<ul>
+<li>Трафик: упал на 15% → гипотезы: SEO, реклама, сезонность</li>
+<li>Конверсия: без изменений → отставить</li>
+<li>Средний чек: упал на 8% → гипотезы: ассортимент, скидки</li>
+<li>Частота: упала на 20% → гипотезы: удержание, программа лояльности</li>
+</ul>
+
+<p><strong>Вывод:</strong> Основные рычаги — возврат трафика и повышение частоты повторных покупок.</p>
+
+</div>
+<div class="nav-bottom">
+<a class="btn-nav btn-prev" href="27_KANO.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span><span class="nav-label">Предыдущий</span><span class="nav-title">Классификация фич по восприятию пользователем</span></span></a>
+<span></span>
+</div>
+</div>
+
+<script>
+const bar = document.getElementById('progressBar');
+const btn = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  bar.style.width = pct + '%';
+  btn.style.opacity = h.scrollTop > 300 ? '1' : '0';
+  btn.style.pointerEvents = h.scrollTop > 300 ? 'auto' : 'none';
+});
+btn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+
+function copyPrompt(btn) {
+  const el = document.getElementById('prompt-content');
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Скопировано!';
+    setTimeout(() => {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Копировать';
+    }, 2000);
+  });
+}
+
+// Theme switch from localStorage
+const theme = localStorage.getItem('analion-theme') || 'default';
+document.body.className = theme === 'default' ? '' : 'theme-' + theme;
+</script>
+
+</body>
+</html>
